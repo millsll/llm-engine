@@ -1,0 +1,16 @@
+[package]
+name = "mem-cache"
+description = "KV cache 实现：显存块池、分页 cache、前缀树"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+llm-types.workspace = true
+candle-core.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true

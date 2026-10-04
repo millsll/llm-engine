@@ -1,0 +1,18 @@
+[package]
+name = "llm-runtime"
+description = "运行时编排：调度器、请求生命周期、驱动前向与 cache"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+llm-types.workspace = true
+llm-core.workspace = true
+mem-cache.workspace = true
+llm-tokenizer.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true

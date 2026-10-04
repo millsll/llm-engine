@@ -1,0 +1,17 @@
+[package]
+name = "llm-tokenizer"
+description = "分词与增量反分词"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+llm-types.workspace = true
+tokenizers.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true

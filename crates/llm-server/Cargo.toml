@@ -1,0 +1,26 @@
+[package]
+name = "llm-server"
+description = "引擎入口：命令行与 OpenAI 兼容服务"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+llm-types.workspace = true
+llm-core.workspace = true
+llm-tokenizer.workspace = true
+llm-runtime.workspace = true
+mem-cache.workspace = true
+anyhow.workspace = true
+clap.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+axum.workspace = true
+tokio.workspace = true
+futures.workspace = true
+
+[lints]
+workspace = true
