@@ -16,9 +16,7 @@
 //!   还是分页实现由调用方决定。
 //! - 不依赖 `llm-runtime`：驱动权在运行时层，前向只被调用。
 
-pub mod context;
 pub mod engine;
-pub mod forward;
 pub mod models;
 pub mod sampling;
 pub mod tensor;
