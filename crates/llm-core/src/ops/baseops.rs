@@ -16,6 +16,15 @@ use candle_core::{D, Tensor};
 
 use llm_types::Result;
 
+pub trait BaseOp {}
+
+#[macro_export]
+macro_rules! impl_base_op{
+    ($($t:ty),* $(,)?)=>{
+        $(impl $crate::ops::baseops::BaseOp for $t {})*
+    }
+}
+
 /// 应用 RoPE，Llama / Qwen 使用的 `rotate_half` 形式。
 ///
 /// # 形状

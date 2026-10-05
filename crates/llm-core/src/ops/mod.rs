@@ -6,7 +6,8 @@
 //! [`ops`] 存放本项目自己实现的算子；Phase 1 允许先直接用 `candle_nn`
 //! 的等价实现把正确性跑通，再逐个替换并补数值对齐测试。
 
-pub mod ops;
+pub mod activation;
+pub mod baseops;
 
+pub use baseops::{repeat_kv, rms_norm, silu_and_mul, softmax_last_dim};
 pub use candle_core::{D, DType, Device, IndexOp, Tensor};
-pub use ops::{repeat_kv, rms_norm, silu_and_mul, softmax_last_dim};

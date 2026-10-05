@@ -17,9 +17,14 @@
 //! - 不依赖 `llm-runtime`：驱动权在运行时层，前向只被调用。
 
 pub mod engine;
+pub mod forward_batch;
+pub mod forward_context;
+pub mod layers;
 pub mod models;
+pub mod module;
+pub mod ops;
 pub mod sampling;
-pub mod tensor;
 pub mod weights;
 
+pub use crate::module::Module;
 pub use llm_types::{Error, ModelConfig, Result};
