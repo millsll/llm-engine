@@ -8,6 +8,8 @@
 
 pub mod activation;
 pub mod baseops;
+pub mod layernorm;
+pub mod rotary_embedding;
 
-pub use baseops::{repeat_kv, rms_norm, silu_and_mul, softmax_last_dim};
+pub use baseops::{naive_attention, repeat_kv, rms_norm, silu_and_mul, softmax_last_dim};
 pub use candle_core::{D, DType, Device, IndexOp, Tensor};

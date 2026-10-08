@@ -9,7 +9,7 @@ pub struct LinearLayer {
 impl Module for LinearLayer {
     type Input = Tensor;
     type Output = Tensor;
-    fn forward(&self, input: Tensor, _ctx: ForwardContext) -> Result<Tensor> {
+    fn forward(&self, input: &Tensor, _ctx: &mut ForwardContext) -> Result<Tensor> {
         // 转置乘加
         let wt = self.weight.t()?;
         let output = input.matmul(&wt)?;

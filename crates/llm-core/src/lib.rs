@@ -27,4 +27,6 @@ pub mod sampling;
 pub mod weights;
 
 pub use crate::module::Module;
+pub use forward_batch::ForwardBatch;
+pub use forward_context::ForwardContext;
 pub use llm_types::{Error, ModelConfig, Result};

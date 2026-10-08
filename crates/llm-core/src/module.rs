@@ -5,5 +5,5 @@ pub trait Module {
     type Input;
     type Output;
 
-    fn forward(&self, input: Self::Input, ctx: ForwardContext) -> Result<Self::Output>;
+    fn forward(&self, input: &Self::Input, ctx: &mut ForwardContext) -> Result<Self::Output>;
 }

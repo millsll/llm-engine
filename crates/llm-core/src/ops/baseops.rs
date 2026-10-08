@@ -12,7 +12,12 @@
 //!
 //! TODO(phase-1): 实现其余四个算子。
 
-use candle_core::{D, Tensor};
+use std::num;
+
+use candle_core::{
+    D::{self, Minus1, Minus2},
+    Tensor,
+};
 
 use llm_types::Result;
 
@@ -96,6 +101,27 @@ pub fn repeat_kv(x: &Tensor, n_rep: usize) -> Result<Tensor> {
 pub fn rms_norm(x: &Tensor, weight: &Tensor, eps: f32) -> Result<Tensor> {
     let out = candle_nn::ops::rms_norm(x, weight, eps)?;
     Ok(out)
+}
+
+/// naive attn kernel
+/// input q: B h l d
+pub fn naive_attention(q: &Tensor, k: &Tensor, v: &Tensor, mask: &Tensor) -> Result<Tensor> {
+    let num_q_heads = q.dim(1)?;
+    let num_kv_heads = k.dim(1)?;
+    let head_dim = q.dim(Minus1)?;
+    // kv b h l d
+    let k = repeat_kv(k, num_q_heads / num_kv_heads)?;
+    let v = repeat_kv(v, num_q_heads / num_kv_heads)?;
+    // b h d l
+    let kt = k.transpose(Minus1, Minus2)?;
+    let score = q.matmul(&kt)?;
+    let scale = 1.0 / (head_dim as f64).sqrt();
+    let score = score.affine(scale, 0.0)?;
+    let score = score.add(mask)?;
+    // score b h l l
+    let score = softmax_last_dim(&score)?;
+    let hidden = score.matmul(&v)?;
+    Ok(hidden)
 }
 
 #[cfg(test)]

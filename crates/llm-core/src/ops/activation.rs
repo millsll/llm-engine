@@ -6,18 +6,18 @@ use crate::ops::baseops::BaseOp;
 use crate::ops::baseops::silu_and_mul;
 
 pub trait SiluAndMulImpl: BaseOp {
-    type Input<'a>;
+    type Input;
     type Output;
-    fn forward<'a>(&self, x: Self::Input<'a>) -> Result<Self::Output>;
+    fn forward(&self, x: &Self::Input) -> Result<Self::Output>;
 }
 
 pub struct SiluAndMul;
 impl_base_op!(SiluAndMul);
 
 impl SiluAndMulImpl for SiluAndMul {
-    type Input<'a> = &'a Tensor;
+    type Input = Tensor;
     type Output = Tensor;
-    fn forward<'a>(&self, x: &'a Tensor) -> Result<Tensor> {
+    fn forward<'a>(&self, x: &Tensor) -> Result<Tensor> {
         let last_dim = x.dim(Minus1)?;
         let gate = x.narrow(Minus1, 0, last_dim / 2)?;
         let up = x.narrow(Minus1, last_dim / 2, last_dim / 2)?;
