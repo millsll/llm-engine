@@ -4,16 +4,16 @@
 //!
 //! TODO(phase-1): 在 qwen2 数值对齐通过后实现。
 
+use crate::layers::layernorm::RMSNorm;
 use crate::{
     ForwardContext,
     layers::{
         attention::{Attention, AttentionInput},
+        embedding::VocabeEmbedding,
         linear::LinearLayer,
     },
     ops::{
         activation::{self, SiluAndMulImpl},
-        layernorm::{LayerNorm, RMSNorm},
-        rms_norm,
         rotary_embedding::base::{RotaryEmbedding, RotaryEmbeddingImpl},
     },
 };
@@ -85,14 +85,61 @@ impl Module for LlamaDecoderLayer {
     type Output = Tensor;
     fn forward(&self, input: &Tensor, ctx: &mut ForwardContext) -> Result<Tensor> {
         let residual = input.clone();
-        let hidden_states = self.input_layernorm.forward(input)?;
+        let hidden_states = self.input_layernorm.forward(input, ctx)?;
         let hidden_states = self.attn.forward(&hidden_states, ctx)?;
         let hidden_states = hidden_states.add(&residual)?;
 
         let residual = hidden_states.clone();
-        let hidden_states = self.post_attn_layernorm.forward(input)?;
+        let hidden_states = self.post_attn_layernorm.forward(input, ctx)?;
         let hidden_states = self.mlp.forward(&hidden_states, ctx)?;
         let output = hidden_states.add(&residual)?;
         Ok(output)
+    }
+}
+
+pub struct LlamaModel {
+    embed_tokens: VocabeEmbedding,
+    layers: Vec<LlamaDecoderLayer>,
+    norm: RMSNorm,
+}
+
+pub struct LlamaModelInput {
+    pub(crate) input: Tensor,
+    pub(crate) input_embedding: Option<Tensor>,
+}
+
+impl Module for LlamaModel {
+    type Input = LlamaModelInput;
+    type Output = Tensor;
+    fn forward(&self, input: &LlamaModelInput, ctx: &mut ForwardContext) -> Result<Tensor> {
+        let mut hidden_states = self.embed_tokens.forward(&input.input, ctx)?;
+        for layer in self.layers.iter() {
+            hidden_states = layer.forward(&hidden_states, ctx)?;
+        }
+        let output = self.norm.forward(&hidden_states, ctx)?;
+
+        Ok(output)
+    }
+}
+
+pub struct LlamaForCausalLM {
+    model: LlamaModel,
+    lm_head: VocabeEmbedding,
+}
+
+impl Module for LlamaForCausalLM {
+    type Input = Tensor;
+    type Output = Tensor;
+    fn forward(&self, input: &Self::Input, ctx: &mut ForwardContext) -> Result<Self::Output> {
+        let hidden_states = self.model.forward(
+            &LlamaModelInput {
+                input: input.clone(),
+                input_embedding: None,
+            },
+            ctx,
+        )?;
+        let last_hidden_states = ctx.batch.select_last_query_tokens(&hidden_states)?;
+        let logits = self.lm_head.forward(&last_hidden_states, ctx)?;
+        Ok(logits)
     }
 }

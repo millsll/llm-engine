@@ -1,3 +1,4 @@
+use candle_core::DType;
 use candle_core::Tensor;
 use llm_types::Result;
 
@@ -25,6 +26,10 @@ impl ForwardBatch {
         query_lens: &Tensor,
         prefix_lens: &Tensor,
     ) -> Result<Self> {
+        debug_assert!(input_ids.dtype() == DType::U32);
+        debug_assert!(positions.dtype() == DType::U32);
+        debug_assert!(query_lens.dtype() == DType::U32);
+        debug_assert!(prefix_lens.dtype() == DType::U32);
         let seq_lens = (query_lens + prefix_lens)?;
         let cu_seqlens_q = query_lens.cumsum(0)?;
         let cu_seqlens_kv = prefix_lens.cumsum(0)?;
@@ -41,5 +46,13 @@ impl ForwardBatch {
             cu_seqlens_q,
             cu_seqlens_kv,
         })
+    }
+
+    pub fn select_last_query_tokens(&self, hidden_states: &Tensor) -> Result<Tensor> {
+        let indices = self
+            .cu_seqlens_q
+            .broadcast_sub(&Tensor::ones_like(&self.cu_seqlens_q)?)?;
+        let output = hidden_states.index_select(&indices, 0)?;
+        Ok(output)
     }
 }
