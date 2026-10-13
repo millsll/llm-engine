@@ -9,4 +9,7 @@
 //! TODO(phase-1): 实现 layers 与 qwen2，跑通单请求贪心生成。
 
 pub mod llama;
+pub mod model;
 pub mod qwen2;
+
+pub use model::Model;

@@ -107,7 +107,9 @@ crates/
 ├── llm-types/src/
 │   ├── lib.rs
 │   ├── error.rs          Error / Result
-│   ├── config.rs         ModelConfig（直接反序列化 HF config.json）
+│   ├── config.rs         PretrainedConfig（serde 映射 HF config.json）
+│   │                     + RuntimeParams（设备 / 精度）
+│   │                     + ModelConfig（模型路径 + 前者，构造时解析并校验）
 │   ├── device.rs         DeviceSpec / DTypeSpec
 │   ├── block.rs          BlockId / BlockTable
 │   ├── kv.rs             KvCache trait

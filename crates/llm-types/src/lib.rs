@@ -27,10 +27,11 @@ pub mod config;
 pub mod device;
 pub mod error;
 pub mod kv;
+pub mod model_config;
 pub mod sampling;
 
 pub use block::{BlockId, BlockTable};
-pub use config::ModelConfig;
+pub use config::{ModelConfig, PretrainedConfig, RuntimeParams};
 pub use device::{DTypeSpec, DeviceSpec};
 pub use error::{Error, Result};
 pub use kv::KvCache;

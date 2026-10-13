@@ -4,8 +4,8 @@ use candle_core::Tensor;
 use candle_nn::varlen_attention::flash_attn_varlen_unfused;
 use llm_types::Result;
 pub struct Attention {
-    head_dim: usize,
-    num_heads: usize,
+    pub head_dim: usize,
+    pub num_heads: usize,
 }
 
 pub struct AttentionInput {

@@ -2212,6 +2212,7 @@ dependencies = [
  "hf-hub",
  "llm-types",
  "memmap2",
+ "rayon",
  "safetensors 0.8.0",
  "serde",
  "serde_json",
@@ -2223,10 +2224,15 @@ dependencies = [
 name = "llm-runtime"
 version = "0.1.0"
 dependencies = [
+ "candle-core",
+ "candle-nn",
  "llm-core",
  "llm-tokenizer",
  "llm-types",
  "mem-cache",
+ "safetensors 0.8.0",
+ "serde",
+ "serde_json",
  "thiserror 2.0.21",
  "tracing",
 ]

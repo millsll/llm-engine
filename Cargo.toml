@@ -18,8 +18,8 @@ llm-tokenizer = { path = "crates/llm-tokenizer" }
 kv-cache = { path = "crates/kv-cache" }
 
 # --- 张量层 ---
-candle-core = "0.11"
-candle-nn = "0.11"
+candle-core = {version="0.11",features=["cuda"]}
+candle-nn = {version="0.11",features=["cuda"]}
 
 # --- 权重与分词 ---
 safetensors = "0.8"
@@ -38,6 +38,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 clap = { version = "4", features = ["derive"] }
 futures = "0.3"
+rayon = "1.12.0"
 
 # --- 服务端 ---
 axum = "0.8"

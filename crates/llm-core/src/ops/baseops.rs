@@ -12,8 +12,6 @@
 //!
 //! TODO(phase-1): 实现其余四个算子。
 
-use std::num;
-
 use candle_core::{
     D::{self, Minus1, Minus2},
     Tensor,

@@ -1,4 +1,5 @@
 use candle_core::{DType, Tensor};
+use candle_nn::VarBuilder;
 use llm_types::Result;
 
 use crate::Module;
@@ -13,5 +14,12 @@ impl Module for VocabeEmbedding {
         assert!(input.dtype() == DType::U32);
         let output = self.weight.index_select(input, 0)?;
         Ok(output)
+    }
+}
+
+impl VocabeEmbedding {
+    pub fn load(vb: &VarBuilder, vocabe_shape: &[usize]) -> Result<Self> {
+        let weight = vb.get(vocabe_shape, "weight")?;
+        Ok(Self { weight })
     }
 }
