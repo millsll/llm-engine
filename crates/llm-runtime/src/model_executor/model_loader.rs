@@ -7,7 +7,6 @@ use llm_types::Error;
 use llm_types::ModelConfig;
 use llm_types::Result;
 use llm_types::model_config::LlamaConfig;
-use safetensors::Dtype;
 
 use crate::model_executor::weight::index::find_safetensors_files;
 

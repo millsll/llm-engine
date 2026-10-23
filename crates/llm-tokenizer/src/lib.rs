@@ -16,4 +16,5 @@
 //! TODO(phase-1): 实现 `Tokenizer` 的加载与编解码。
 //! TODO(phase-6): 实现 `IncrementalDecoder` 与 stop-string 匹配。
 pub mod hf_tokenizer;
+pub mod hf_tokenizer_config;
 pub mod tokenizer;

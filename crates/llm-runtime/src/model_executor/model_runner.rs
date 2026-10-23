@@ -1,5 +1,4 @@
 use candle_core::{Device, Tensor};
-use candle_nn::VarBuilder;
 use llm_core::models::Model;
 use llm_types::{ModelConfig, Result};
 
