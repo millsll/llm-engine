@@ -92,12 +92,8 @@ impl Module for LlamaAttention {
         let qkv = self.qkv_proj.forward(input, ctx)?;
         // 拆分qkv total h
         let q = qkv.narrow(Minus1, 0, self.q_size)?;
-        let k = qkv.narrow(Minus1, self.q_size, self.q_size + self.kv_size)?;
-        let v = qkv.narrow(
-            Minus1,
-            self.q_size + self.kv_size,
-            self.q_size + 2 * self.kv_size,
-        )?;
+        let k = qkv.narrow(Minus1, self.q_size, self.kv_size)?;
+        let v = qkv.narrow(Minus1, self.q_size + self.kv_size, self.kv_size)?;
         let (q, k) = self.rotary_embed.forward(&ctx.batch.positions, &q, &k)?;
         let attn_output = self.attn.forward(&AttentionInput::new(&q, &k, &v), ctx)?;
         let output = self.o_proj.forward(&attn_output, ctx)?;
@@ -161,7 +157,7 @@ impl Module for LlamaDecoderLayer {
         let hidden_states = hidden_states.add(&residual)?;
 
         let residual = hidden_states.clone();
-        let hidden_states = self.post_attn_layernorm.forward(input, ctx)?;
+        let hidden_states = self.post_attn_layernorm.forward(&hidden_states, ctx)?;
         let hidden_states = self.mlp.forward(&hidden_states, ctx)?;
         let output = hidden_states.add(&residual)?;
         Ok(output)

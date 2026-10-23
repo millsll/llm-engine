@@ -26,6 +26,7 @@ impl AttentionInput {
 impl Module for Attention {
     type Input = AttentionInput;
     type Output = Tensor;
+    /// input qkv: [total_token, qkv_size]
     fn forward(&self, input: &AttentionInput, ctx: &mut ForwardContext) -> Result<Tensor> {
         // q: total, h*head_dim
         let (total_q, _) = input.q.dims2()?;
@@ -37,6 +38,7 @@ impl Module for Attention {
         let v = input
             .v
             .reshape((total_kv, kv_hidden / self.head_dim, self.head_dim))?;
+        // 目前暂不组织qkv缓存
         // total h d
         let output = flash_attn_varlen_unfused(
             &q,

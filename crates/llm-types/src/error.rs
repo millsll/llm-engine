@@ -1,5 +1,7 @@
 //! 引擎统一错误类型。
 
+use std::path::PathBuf;
+
 use candle_core;
 use thiserror::Error;
 
@@ -23,21 +25,27 @@ pub enum Error {
     Cache(String),
 
     /// JSON 解析或序列化失败。
-    ///
-    /// 直接包住 `serde_json::Error` 而不是拍平成 `String`，是为了保留它带的行列号
-    /// ——「第 3 行第 17 列期望一个字符串」这种信息在排查畸形 `config.json` 或
-    /// safetensors index 时最有用。调用方若知道是哪个文件，应当在外层补上下文
-    /// （serde 的错误本身不含文件名）。
     #[error("JSON 解析失败: {0}")]
     Json(#[from] serde_json::Error),
 
-    /// 张量运算失败。
+    /// candle core错误，包括tensor计算及vb get
     #[error(transparent)]
     Tensor(#[from] candle_core::Error),
 
     /// 文件系统操作失败。
     #[error(transparent)]
     Io(#[from] std::io::Error),
+
+    /// Tokenizer加载失败
+    #[error("Tokenizer Load fail from {path:?}: {source}")]
+    TokenizerLoad {
+        path: PathBuf,
+        #[source]
+        source: Box<dyn std::error::Error + Send + Sync>,
+    },
+
+    #[error("tokenizer error: {0}")]
+    TokenizerError(#[from] Box<dyn std::error::Error + Send + Sync>),
 }
 
 /// 便捷 `Result` 别名，默认错误类型为 [`Error`]。
