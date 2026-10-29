@@ -1,17 +1,52 @@
 use candle_core::{Device, Tensor};
-use llm_core::models::Model;
+use llm_core::{ForwardBatch, ForwardContext, models::Model};
 use llm_types::{ModelConfig, Result};
 
-use crate::model_executor::model_loader::ModelLoader;
+use crate::{
+    model_executor::model_loader::ModelLoader,
+    sampler::{Sampler, SamplerKind, create_sampler},
+};
 
 pub struct ModelRunner {
     model: Box<dyn Model<Input = Tensor, Output = Tensor>>,
+    sampler: Box<dyn Sampler>,
+}
+
+pub struct ModelRunnerOutput {
+    /// batch中每个请求下一token对应的logits
+    /// shape [batch_size vocab_size]
+    pub next_logits: Tensor,
 }
 
 impl ModelRunner {
     pub fn init(model_config: &ModelConfig, device: &Device) -> Result<Self> {
         let model = ModelLoader::load(model_config, device)?;
-        Ok(Self { model })
+        let sampler = create_sampler(SamplerKind::Greedy);
+        Ok(Self { model, sampler })
+    }
+
+    pub fn forward(&self, forward_batch: &ForwardBatch) -> Result<ModelRunnerOutput> {
+        // forward batch中的tensor都为对应设备上的值
+        // 组装forward context 然后调用模型
+        let mut temp_attention = String::from("temp");
+        let mut forward_context = ForwardContext {
+            batch: forward_batch,
+            attention: temp_attention.as_mut_str(),
+        };
+        // 调用self 模型中的forwrad
+        // 此处input的数据实际上是input ids
+        let logits = self
+            .model
+            .forward(&forward_batch.input_ids, &mut forward_context)?;
+        // output logits中需要根据cur seqlens q来获取next logits
+        let last_indices = (&forward_batch.cu_seqlens_q - 1.0)?;
+        let next_logits = logits.index_select(&last_indices, 0)?;
+        Ok(ModelRunnerOutput { next_logits })
+    }
+
+    pub fn sample(&self, logits: &Tensor) -> Result<Tensor> {
+        let next_ids = self.sampler.sample(logits)?;
+        Ok(next_ids)
     }
 }
 

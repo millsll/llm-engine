@@ -17,3 +17,8 @@
 //! 给定固定的到达顺序与显存上限，断言每一步的组批结果。
 //!
 //! TODO(phase-3): 实现调度循环与 mock 执行器测试。
+
+use crate::manager::tp_worker::TpModelWorker;
+pub struct Scheduler {
+    tp_worker: TpModelWorker,
+}

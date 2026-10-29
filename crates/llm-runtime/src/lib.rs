@@ -24,6 +24,8 @@
 //!
 //! TODO(phase-3): 实现 FCFS 组批与重算式抢占。
 
-pub mod scheduler;
-
 pub mod model_executor;
+
+pub mod sampler;
+
+pub mod manager;

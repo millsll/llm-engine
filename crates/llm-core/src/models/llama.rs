@@ -242,7 +242,7 @@ impl LlamaModel {
 
 pub struct LlamaForCausalLM {
     model: LlamaModel,
-    lm_head: VocabeEmbedding,
+    lm_head: LinearLayer,
 }
 
 impl Module for LlamaForCausalLM {
@@ -271,7 +271,7 @@ impl LlamaForCausalLM {
         // pp 只到模块名，叶子名 "weight" 由 VocabeEmbedding::load 自己拼。
         // 写成 pp("lm_head.weight") 会去找 "lm_head.weight.weight"。
         let vb_lm_head = vb_bf16.clone().pp("lm_head");
-        let lm_head = VocabeEmbedding::load(&vb_lm_head, &[config.vocab_size, config.hidden_size])?;
+        let lm_head = LinearLayer::load(&vb_lm_head, &[config.vocab_size, config.hidden_size])?;
         //let lm_head = vb.get((config.vocab_size, config.hidden_size), "lm_head.weight")?;
         let model = LlamaModel::load(&vb_bf16.clone(), config)?;
         Ok(Self { model, lm_head })

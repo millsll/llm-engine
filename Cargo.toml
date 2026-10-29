@@ -16,6 +16,7 @@ mem-cache = { path = "crates/mem-cache" }
 llm-runtime = { path = "crates/llm-runtime" }
 llm-tokenizer = { path = "crates/llm-tokenizer" }
 kv-cache = { path = "crates/kv-cache" }
+entrypoints = { path="crates/entrypoints" }
 
 # --- 张量层 ---
 candle-core = {version="0.11",features=["cuda"]}
