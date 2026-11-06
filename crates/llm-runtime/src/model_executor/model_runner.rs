@@ -45,7 +45,7 @@ impl ModelRunner {
             .broadcast_sub(&Tensor::new(1u32, forward_batch.cu_seqlens_q.device())?)?;
         let max_index = last_indices.max_all()?.to_scalar::<u32>()?;
         // 检查logits 的shape
-        testlog::test_log!("logits shape: {:?}", logits.shape());
+        //testlog::test_log!("logits shape: {:?}", logits.shape());
         if max_index as usize >= logits.dim(0)? {
             //return Err(llm_types::Error::InvalidRequest(format!(
             //    "max index :{} larger than max dim{}",

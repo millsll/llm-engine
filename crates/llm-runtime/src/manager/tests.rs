@@ -36,6 +36,7 @@ fn test_tp_worker_generation_batch_size_1() {
     println!("{test_example}");
 }
 
+#[test]
 fn test_tp_worker_generation_batch_size_n() {
     println!("generation test start---------------");
     let model_config =
@@ -50,8 +51,8 @@ fn test_tp_worker_generation_batch_size_n() {
     println!("load completed-----------------");
     let tokenizer_config = tokenizer.config();
     // 编写两个测试样例以测试batch
-    let test_example1 = "```python\n def fibonacci".to_string();
-    let test_example2 = "```java\n int bisec".to_string();
+    let mut test_example1 = "```python\n def fibonacci".to_string();
+    let mut test_example2 = "```java\n int bisec".to_string();
     //let mut examples: Vec<String> = vec![test_example1, test_example2];
     let mut next_token1 = "".to_string();
     let mut next_token2 = "".to_string();
@@ -61,14 +62,27 @@ fn test_tp_worker_generation_batch_size_n() {
     while max_tokens < 100 {
         let mut input_ids: Vec<Vec<u32>> = Vec::new();
         if !tokenizer_config.is_eos(&next_token1) {
-            let ids1 = tokenizer.encode(&test_example1, false)?;
+            let ids1 = tokenizer.encode(&test_example1, false).unwrap();
             input_ids.push(ids1);
         }
         if !tokenizer_config.is_eos(&next_token2) {
-            let ids2 = tokenizer.encode(&test_example2, false)?;
+            let ids2 = tokenizer.encode(&test_example2, false).unwrap();
             input_ids.push(ids2);
         }
+        if input_ids.len() == 0 {
+            break;
+        }
+        let ids_slice: Vec<&[u32]> = input_ids.iter().map(|r| r.as_slice()).collect();
+        let next_ids = tp_worker.test_batch_forward(&ids_slice).unwrap();
+        let next_ids = next_ids.to_vec1().unwrap();
+        next_token1 = tokenizer.decode(&next_ids[0..1], false).unwrap();
+        next_token2 = tokenizer.decode(&next_ids[1..], false).unwrap();
+        test_example1 += &next_token1;
+        test_example2 += &next_token2;
+        max_tokens += 1;
     }
+    println!("{test_example1}\n");
+    println!("{test_example2}\n");
 }
 
 #[test]
