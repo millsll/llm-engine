@@ -35,13 +35,28 @@ impl ModelRunner {
         };
         // 调用self 模型中的forwrad
         // 此处input的数据实际上是input ids
+
         let logits = self
             .model
             .forward(&forward_batch.input_ids, &mut forward_context)?;
         // output logits中需要根据cur seqlens q来获取next logits
-        let last_indices = (&forward_batch.cu_seqlens_q - 1.0)?;
-        let next_logits = logits.index_select(&last_indices, 0)?;
-        Ok(ModelRunnerOutput { next_logits })
+        let last_indices = &forward_batch
+            .cu_seqlens_q
+            .broadcast_sub(&Tensor::new(1u32, forward_batch.cu_seqlens_q.device())?)?;
+        let max_index = last_indices.max_all()?.to_scalar::<u32>()?;
+        // 检查logits 的shape
+        testlog::test_log!("logits shape: {:?}", logits.shape());
+        if max_index as usize >= logits.dim(0)? {
+            //return Err(llm_types::Error::InvalidRequest(format!(
+            //    "max index :{} larger than max dim{}",
+            //    max_index,
+            //    logits.dim(0)?
+            //)));
+        }
+        //let next_logits = logits.index_select(&last_indices, 0)?;
+        Ok(ModelRunnerOutput {
+            next_logits: logits,
+        })
     }
 
     pub fn sample(&self, logits: &Tensor) -> Result<Tensor> {

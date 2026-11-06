@@ -9,6 +9,7 @@ use llm_types::{
     Result,
     model_config::{CoreConfig, LlamaConfig},
 };
+use safetensors::Dtype;
 use std::collections::HashMap;
 
 static ROPE_CACHE: OnceLock<Mutex<HashMap<RopeKey, Arc<RotaryEmbedding>>>> = OnceLock::new();
@@ -65,6 +66,7 @@ pub struct RotaryEmbedding {
     head_size: usize,
     rotary_dim: usize, // 0:rotary_dim rotate left passthrough
     cos_sin_cache: Tensor,
+    max_seqlen: usize,
 }
 
 impl_base_op!(RotaryEmbedding);
@@ -84,25 +86,33 @@ impl RotaryEmbeddingImpl for RotaryEmbedding {
         let cache_dim = self.cos_sin_cache.shape().dim(Minus1)?;
         let rotary_dim = cache_dim / 2;
 
-        let cos = self.cos_sin_cache.narrow(Minus1, 0, rotary_dim)?;
+        let cos = self.cos_sin_cache.narrow(0, 0, self.max_seqlen)?;
         let cos = cos.index_select(&positions, 0)?;
-        let sin = self.cos_sin_cache.narrow(Minus1, rotary_dim, rotary_dim)?;
+        let sin = self
+            .cos_sin_cache
+            .narrow(0, self.max_seqlen, self.max_seqlen)?;
         let sin = sin.index_select(&positions, 0)?;
 
         let q_shape = query.shape().clone();
         let q_heads = q_shape.dim(1)? / self.head_size;
         let query = query.reshape((num_tokens, q_heads, self.head_size))?;
         let query_rot = query.narrow(Minus1, 0, self.rotary_dim)?;
-        let query_pass = query.narrow(Minus1, self.rotary_dim, self.head_size)?;
+        let query_pass = query.narrow(Minus1, self.rotary_dim, self.head_size - self.rotary_dim)?;
+        // 首先将query_rot转成f32传入计算后转回bf16
+        let query_rot = query_rot.to_dtype(DType::F32)?;
         let query_rot = apply_rotary(&query_rot, &cos, &sin)?;
+        // 转回bf16
+        let query_rot = query_rot.to_dtype(DType::BF16)?;
         let query = Tensor::cat(&[query_rot, query_pass], Minus1)?.reshape(q_shape)?;
 
         let k_shape = key.shape().clone();
         let kv_heads = k_shape.dim(1)? / self.head_size;
         let key = key.reshape((num_tokens, kv_heads, self.head_size))?;
         let key_rot = key.narrow(Minus1, 0, self.rotary_dim)?;
-        let key_pass = key.narrow(Minus1, self.rotary_dim, self.head_size)?;
+        let key_pass = key.narrow(Minus1, self.rotary_dim, self.head_size - self.rotary_dim)?;
+        let key_rot = key_rot.to_dtype(DType::F32)?;
         let key_rot = apply_rotary(&key_rot, &cos, &sin)?;
+        let key_rot = key_rot.to_dtype(DType::BF16)?;
         let key = Tensor::cat(&[key_rot, key_pass], Minus1)?.reshape(k_shape)?;
 
         Ok((query, key))
@@ -139,10 +149,13 @@ impl RotaryEmbedding {
 
         let cos = freqs.cos()?;
         let sin = freqs.sin()?;
+        let cos = Tensor::cat(&[&cos, &cos], Minus1)?;
+        let sin = Tensor::cat(&[&sin, &sin], Minus1)?;
         Ok(Self {
             head_size: head_dim,
             rotary_dim: head_dim,
-            cos_sin_cache: Tensor::cat(&[cos, sin], Minus1)?,
+            cos_sin_cache: Tensor::cat(&[cos, sin], 0)?,
+            max_seqlen: max_seq_len,
         })
     }
 }

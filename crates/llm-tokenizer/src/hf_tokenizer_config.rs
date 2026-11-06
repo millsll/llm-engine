@@ -23,4 +23,15 @@ impl HfTokenizerConfig {
         let config = serde_json::from_reader(file)?;
         Ok(config)
     }
+
+    pub fn is_eos(&self, token: &str) -> bool {
+        match &self.eos_token {
+            Some(eos) => {
+                return eos.eq(token);
+            }
+            None => {
+                return false;
+            }
+        }
+    }
 }

@@ -38,6 +38,10 @@ impl HfTokenizer {
     pub fn config(&self) -> &HfTokenizerConfig {
         &self.tokenizer_config
     }
+
+    fn batch_decode(&self, ids: &[u32]) {
+        self.batch_decode(ids);
+    }
 }
 
 impl tokenizer::Tokenizer for HfTokenizer {

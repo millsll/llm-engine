@@ -18,3 +18,4 @@
 pub mod hf_tokenizer;
 pub mod hf_tokenizer_config;
 pub mod tokenizer;
+pub mod tokenizer_manager;

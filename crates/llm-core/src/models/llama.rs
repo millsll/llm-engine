@@ -80,6 +80,7 @@ pub struct LlamaAttention {
     // attention size
     q_size: usize,
     kv_size: usize,
+    hidden_size: usize,
 
     attn: Attention,
 }
@@ -96,6 +97,8 @@ impl Module for LlamaAttention {
         let v = qkv.narrow(Minus1, self.q_size + self.kv_size, self.kv_size)?;
         let (q, k) = self.rotary_embed.forward(&ctx.batch.positions, &q, &k)?;
         let attn_output = self.attn.forward(&AttentionInput::new(&q, &k, &v), ctx)?;
+        // reshape attnoutput [total H head_size]->[total hiddensize]
+        let attn_output = attn_output.reshape((ctx.batch.total_query, self.hidden_size))?;
         let output = self.o_proj.forward(&attn_output, ctx)?;
         Ok(output)
     }
@@ -135,6 +138,7 @@ impl LlamaAttention {
             rotary_embed,
             q_size,
             kv_size,
+            hidden_size: config.hidden_size,
             attn,
         })
     }
@@ -206,10 +210,13 @@ impl Module for LlamaModel {
     type Input = LlamaModelInput;
     type Output = Tensor;
     fn forward(&self, input: &LlamaModelInput, ctx: &mut ForwardContext) -> Result<Tensor> {
+        testlog::test_log!("start testing LlamaModel generation:-------------");
         let mut hidden_states = self.embed_tokens.forward(&input.input, ctx)?;
+        testlog::test_log!("embedding:{:?}", hidden_states);
         for layer in self.layers.iter() {
             hidden_states = layer.forward(&hidden_states, ctx)?;
         }
+        testlog::test_log!("pass layers:{:?}", hidden_states);
         let output = self.norm.forward(&hidden_states, ctx)?;
 
         Ok(output)

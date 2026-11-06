@@ -54,7 +54,9 @@ macro_rules! impl_base_op{
 /// ```
 pub fn apply_rotary(x: &Tensor, cos: &Tensor, sin: &Tensor) -> Result<Tensor> {
     let rot = rotate_half(x)?;
-    let out = (x.broadcast_mul(cos)? + rot.broadcast_mul(sin)?)?;
+    let cos = cos.unsqueeze(1)?;
+    let sin = sin.unsqueeze(1)?;
+    let out = (x.broadcast_mul(&cos)? + rot.broadcast_mul(&sin)?)?;
     Ok(out)
 }
 
